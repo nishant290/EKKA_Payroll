@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+appsettings.Production.json
+*.pfx
+*.p12
+*.pem

@@ -1,0 +1,102 @@
+﻿@model DashboardViewModel
+@{
+    ViewData[index: "Title"] = "Dashboard";
+}
+
+<div class="page-head">
+    <h1>@Model.CompanyName</h1>
+    <div>
+        <a class="btn btn-outline-primary" asp-controller="Employees" asp-action="Create"><i
+            class="bi bi-person-plus"></i> Add employee</a>
+            <a class="btn btn-primary" asp-controller="PayRuns" asp-action="Create"><i class="bi bi-plus-lg"></i> New pay
+                run</a>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="stat-label">Active employees</div>
+                        <div class="stat">@Model.ActiveEmployees</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="stat-label">Hours logged this week</div>
+                        <div class="stat">@Model.HoursThisWeek.ToString("0.##")</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="stat-label">Shifts rostered this week</div>
+                        <div class="stat">@Model.ShiftsThisWeek</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">Last pay run</div>
+                    <div class="card-body">
+                        @if (Model.LastPayRun == null)
+                        {
+                            <p class="text-muted mb-0">No pay runs yet. Add employees and timesheets, then create your first pay
+                                run.</p>
+                            }
+                else
+                            {
+                                var r = Model.LastPayRun;
+                                <div class="mb-2">@r.PeriodStart.ToString("dd MMM") – @r.PeriodEnd.ToString("dd MMM yyyy")
+                                    <span
+                                    class="badge @(r.Status == PayRunStatus.Posted ? "bg-success" : "bg-secondary") ms-2">@r.Status</span>
+                                </div>
+                                <div class="d-flex gap-4">
+                                    <div>
+                                        <div class="stat-label">Gross</div>
+                                        <div>@r.TotalGross.ToString("C2")</div>
+                                    </div>
+                                    <div>
+                                        <div class="stat-label">Tax</div>
+                                        <div>@r.TotalTax.ToString("C2")</div>
+                                    </div>
+                                    <div>
+                                        <div class="stat-label">Net</div>
+                                        <div>@r.TotalNet.ToString("C2")</div></div>
+                                    </div>
+                                    <a class="btn btn-sm btn-outline-primary mt-3" asp-controller="PayRuns" asp-action="Details"
+                                       asp-route-id="@r.Id">Open</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header">Upcoming shifts</div>
+                            @if (Model.UpcomingShifts.Count == 0)
+                            {
+                                <div class="card-body text-muted">Nothing rostered. <a asp-controller="Schedule" asp-action="Create">Add a
+                                    shift</a>.</div>
+                                }
+            else
+                                {
+                                    <ul class="list-group list-group-flush">
+                                        @foreach (var s in Model.UpcomingShifts)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>@s.Employee?.FullName</span>
+                                                <span class="text-muted">@s.ShiftDate.ToString("ddd dd MMM") · @s.StartTime.ToString("h:mm tt") –
+                                                    @s.EndTime.ToString("h:mm tt")</span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                </div>
+                            </div>
+                        </div>

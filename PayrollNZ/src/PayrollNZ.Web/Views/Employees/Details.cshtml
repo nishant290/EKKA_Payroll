@@ -1,0 +1,119 @@
+@model Employee
+@{
+    ViewData["Title"] = Model.FullName;
+    var payslips = ViewData["Payslips"] as List<Payslip> ?? new List<Payslip>();
+    var toggleConfirm = Model.IsActive ? "Mark this employee as inactive?" : "Reactivate this employee?";
+    var address = string.Join(", ", new[] { Model.AddressLine1, Model.AddressLine2, Model.Suburb, Model.City, Model.Postcode, Model.Country }
+        .Where(s => !string.IsNullOrWhiteSpace(s)));
+}
+
+<div class="page-head">
+    <h1>@Model.FullName @if (!Model.IsActive) { <span class="badge bg-secondary fs-6">Inactive</span> }</h1>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@Model.Id"><i class="bi bi-pencil"></i> Edit</a>
+        <a class="btn btn-outline-primary" asp-controller="Timesheets" asp-action="Create" asp-route-employeeId="@Model.Id"><i class="bi bi-clock"></i> Log hours</a>
+        <form asp-action="ToggleActive" asp-route-id="@Model.Id" method="post"
+              onsubmit="return confirm('@toggleConfirm');">
+            <button class="btn btn-outline-secondary" type="submit">@(Model.IsActive ? "Deactivate" : "Reactivate")</button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">Contact &amp; residential details</div>
+            <dl class="row p-3 mb-0">
+                <dt class="col-sm-4">Email</dt><dd class="col-sm-8">@Model.Email</dd>
+                <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">@(Model.Phone ?? "—")</dd>
+                <dt class="col-sm-4">Date of birth</dt><dd class="col-sm-8">@(Model.DateOfBirth?.ToString("dd MMM yyyy") ?? "—")</dd>
+                <dt class="col-sm-4">Address</dt><dd class="col-sm-8">@(address.Length > 0 ? address : "—")</dd>
+                <dt class="col-sm-4">Emergency</dt><dd class="col-sm-8">@(Model.EmergencyContactName ?? "—") @Model.EmergencyContactPhone</dd>
+            </dl>
+        </div>
+        <div class="card">
+            <div class="card-header">Employment &amp; tax</div>
+            <dl class="row p-3 mb-0">
+                <dt class="col-sm-4">Job title</dt><dd class="col-sm-8">@(Model.JobTitle ?? "—")</dd>
+                <dt class="col-sm-4">Type</dt><dd class="col-sm-8">@Model.EmploymentType</dd>
+                <dt class="col-sm-4">Pay</dt>
+                <dd class="col-sm-8">@(Model.PayType == PayType.Hourly ? Model.HourlyRate.ToString("C2") + " per hour" : Model.AnnualSalary.ToString("C2") + " per year")</dd>
+                <dt class="col-sm-4">Start date</dt><dd class="col-sm-8">@Model.StartDate.ToString("dd MMM yyyy")</dd>
+                <dt class="col-sm-4">End date</dt><dd class="col-sm-8">@(Model.EndDate?.ToString("dd MMM yyyy") ?? "—")</dd>
+                <dt class="col-sm-4">IRD number</dt><dd class="col-sm-8">@(Model.IrdNumber ?? "—")</dd>
+                <dt class="col-sm-4">Tax code</dt><dd class="col-sm-8">@Model.TaxCode @(Model.HasStudentLoan ? "(student loan)" : "")</dd>
+                <dt class="col-sm-4">KiwiSaver</dt><dd class="col-sm-8">Employee @Model.KiwiSaverEmployeeRate% · Employer @Model.KiwiSaverEmployerRate%</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">Bank accounts</div>
+            @if (Model.BankDetails.Count == 0)
+            {
+                <div class="card-body text-muted small">No bank account yet — add one so this employee can be paid.</div>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var b in Model.BankDetails)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold">@b.AccountName @if (b.IsPrimary) { <span class="badge bg-info text-dark">Primary</span> }</div>
+                                <div class="small text-muted">@b.BankName · @b.AccountNumber</div>
+                            </div>
+                            <form asp-action="DeleteBank" asp-route-id="@Model.Id" asp-route-bankId="@b.Id" method="post"
+                                  onsubmit="return confirm('Remove this bank account?');">
+                                <button class="btn btn-sm btn-link text-danger p-0" title="Remove"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            }
+            <form asp-action="AddBank" asp-route-id="@Model.Id" method="post" class="card-body border-top">
+                <div class="section-title mt-0">Add account</div>
+                <div class="row g-2">
+                    <div class="col-md-5"><input name="BankName" class="form-control form-control-sm" placeholder="Bank" required /></div>
+                    <div class="col-md-7"><input name="AccountName" class="form-control form-control-sm" placeholder="Account name" required /></div>
+                    <div class="col-12"><input name="AccountNumber" class="form-control form-control-sm" placeholder="12-3456-1234567-00"
+                                               pattern="\d{2}-\d{4}-\d{7}-\d{2,3}" required /></div>
+                    <div class="col-md-4"><input name="Particulars" class="form-control form-control-sm" placeholder="Particulars" maxlength="12" /></div>
+                    <div class="col-md-4"><input name="Code" class="form-control form-control-sm" placeholder="Code" maxlength="12" /></div>
+                    <div class="col-md-4"><input name="Reference" class="form-control form-control-sm" placeholder="Reference" maxlength="12" /></div>
+                </div>
+                <div class="form-check my-2">
+                    <input type="checkbox" name="IsPrimary" value="true" class="form-check-input" id="primary" />
+                    <label class="form-check-label small" for="primary">Primary account</label>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" type="submit">Add bank account</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Recent payslips</div>
+            @if (payslips.Count == 0)
+            {
+                <div class="card-body text-muted small">No payslips yet.</div>
+            }
+            else
+            {
+                <table class="table mb-0">
+                    <thead><tr><th>Period</th><th class="num">Gross</th><th class="num">Net</th><th></th></tr></thead>
+                    <tbody>
+                    @foreach (var p in payslips)
+                    {
+                        <tr>
+                            <td>@p.PayRun!.PeriodStart.ToString("dd MMM") – @p.PayRun.PeriodEnd.ToString("dd MMM yyyy")</td>
+                            <td class="num">@p.GrossPay.ToString("C2")</td>
+                            <td class="num">@p.NetPay.ToString("C2")</td>
+                            <td class="text-end"><a asp-controller="PayRuns" asp-action="PayslipPdf" asp-route-id="@p.Id"><i class="bi bi-file-earmark-pdf"></i></a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,68 @@
+@model PayRun
+@{
+    ViewData["Title"] = "Pay run";
+    var posted = Model.Status == PayRunStatus.Posted;
+}
+
+<div class="page-head">
+    <h1>Pay run <small class="text-muted fs-6">@Model.PeriodStart.ToString("dd MMM") – @Model.PeriodEnd.ToString("dd MMM yyyy")</small>
+        <span class="badge @(posted ? "bg-success" : "bg-secondary") fs-6">@Model.Status</span></h1>
+    <div class="d-flex gap-2">
+        @if (!posted)
+        {
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Delete this draft pay run?');">
+                <button class="btn btn-outline-danger" type="submit">Delete draft</button></form>
+            <form asp-action="Post" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Post this pay run? Payslips will be final.');">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle"></i> Post pay run</button></form>
+        }
+        else
+        {
+            <button class="btn btn-outline-secondary" type="button" disabled title="Coming in phase 2 (BNZ, ASB, ANZ, Westpac, Kiwibank)">
+                <i class="bi bi-download"></i> Download bank CSV</button>
+            <form asp-action="EmailAll" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Email every payslip in this run?');">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-envelope"></i> Email all payslips</button></form>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="stat-label">Gross</div><div class="stat">@Model.TotalGross.ToString("C2")</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="stat-label">PAYE</div><div class="stat">@Model.TotalTax.ToString("C2")</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="stat-label">Net</div><div class="stat">@Model.TotalNet.ToString("C2")</div></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><div class="stat-label">Payment date</div><div class="stat fs-4">@Model.PaymentDate.ToString("dd MMM yyyy")</div></div></div></div>
+</div>
+
+<div class="alert alert-warning small">
+    <strong>Heads up:</strong> tax figures use a basic placeholder calculator. The full NZ tax engine (all tax codes, student loan, ACC, ESCT) comes in phase 2 — don't use these for real payments yet.
+</div>
+
+<div class="card">
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>Employee</th><th>Tax code</th><th class="num">Hours</th><th class="num">Gross</th><th class="num">PAYE</th><th class="num">KiwiSaver</th><th class="num">Net</th><th>Bank</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var p in Model.Payslips.OrderBy(p => p.Employee!.LastName))
+        {
+            var bank = p.Employee!.BankDetails.FirstOrDefault(b => b.IsPrimary) ?? p.Employee.BankDetails.FirstOrDefault();
+            <tr>
+                <td><a asp-controller="Employees" asp-action="Details" asp-route-id="@p.EmployeeId">@p.Employee.FullName</a>
+                    @if (p.EmailedAtUtc != null) { <i class="bi bi-envelope-check text-success ms-1" title="Payslip emailed"></i> }</td>
+                <td>@p.TaxCode</td>
+                <td class="num">@(p.Employee.PayType == PayType.Salary ? "—" : p.Hours.ToString("0.00"))</td>
+                <td class="num">@p.GrossPay.ToString("C2")</td>
+                <td class="num">@p.PayeTax.ToString("C2")</td>
+                <td class="num">@p.KiwiSaverEmployee.ToString("C2")</td>
+                <td class="num fw-semibold">@p.NetPay.ToString("C2")</td>
+                <td>@if (bank == null) { <span class="badge bg-warning text-dark">No bank</span> } else { <span class="small text-muted">@bank.BankName</span> }</td>
+                <td class="text-end text-nowrap">
+                    <a class="btn btn-sm btn-outline-primary" asp-action="PayslipPdf" asp-route-id="@p.Id" title="Download PDF"><i class="bi bi-file-earmark-pdf"></i></a>
+                    @if (posted)
+                    {
+                        <form asp-action="EmailPayslip" asp-route-id="@p.Id" method="post" class="d-inline">
+                            <button class="btn btn-sm btn-outline-primary" type="submit" title="Email to @p.Employee.Email"><i class="bi bi-envelope"></i></button></form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

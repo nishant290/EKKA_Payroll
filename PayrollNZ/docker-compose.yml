@@ -1,0 +1,19 @@
+# Local MySQL for development:  docker compose up -d
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: payroll-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_dev_password
+      MYSQL_DATABASE: payroll_nz
+      MYSQL_USER: payroll_user
+      MYSQL_PASSWORD: payroll_dev_password
+    ports:
+      - "3306:3306"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - payroll_mysql_data:/var/lib/mysql
+
+volumes:
+  payroll_mysql_data:

@@ -1,0 +1,64 @@
+@model ScheduleViewModel
+@{
+    ViewData["Title"] = "Schedule";
+    var days = Enumerable.Range(0, 7).Select(i => Model.WeekStart.AddDays(i)).ToList();
+    string Iso(DateOnly d) => d.ToString("yyyy-MM-dd");
+}
+
+<div class="page-head">
+    <h1>Schedule</h1>
+    <div class="d-flex gap-2 align-items-center">
+        <a class="btn btn-outline-secondary" asp-action="Index" asp-route-weekStart="@Iso(Model.WeekStart.AddDays(-7))"><i class="bi bi-chevron-left"></i></a>
+        <span class="fw-semibold">@Model.WeekStart.ToString("dd MMM") – @Model.WeekStart.AddDays(6).ToString("dd MMM yyyy")</span>
+        <a class="btn btn-outline-secondary" asp-action="Index" asp-route-weekStart="@Iso(Model.WeekStart.AddDays(7))"><i class="bi bi-chevron-right"></i></a>
+        <a class="btn btn-outline-secondary" asp-action="Index">Today</a>
+        <a class="btn btn-primary" asp-action="Create" asp-route-date="@Iso(Model.WeekStart)"><i class="bi bi-plus-lg"></i> Add shift</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table roster mb-0">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    @foreach (var d in days) { <th>@d.ToString("ddd dd")</th> }
+                    <th class="num">Hours</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var emp in Model.Employees)
+            {
+                var mine = Model.Shifts.Where(s => s.EmployeeId == emp.Id).ToList();
+                <tr>
+                    <td class="emp">@emp.FullName</td>
+                    @foreach (var d in days)
+                    {
+                        <td>
+                            @foreach (var s in mine.Where(s => s.ShiftDate == d))
+                            {
+                                <div class="shift-chip">
+                                    <div class="fw-semibold">@s.StartTime.ToString("h:mm tt") – @s.EndTime.ToString("h:mm tt")</div>
+                                    @if (!string.IsNullOrWhiteSpace(s.Notes)) { <div class="text-muted">@s.Notes</div> }
+                                    <div class="actions d-flex gap-2">
+                                        <form asp-action="LogHours" asp-route-id="@s.Id" method="post">
+                                            <button class="btn btn-link" title="Copy to timesheet">Log hours</button></form>
+                                        <form asp-action="Delete" asp-route-id="@s.Id" method="post" onsubmit="return confirm('Remove this shift?');">
+                                            <button class="btn btn-link text-danger" title="Remove">Remove</button></form>
+                                    </div>
+                                </div>
+                            }
+                            <a class="small text-muted text-decoration-none" asp-action="Create" asp-route-employeeId="@emp.Id" asp-route-date="@Iso(d)">+</a>
+                        </td>
+                    }
+                    <td class="num">@mine.Sum(s => s.PlannedHours).ToString("0.##")</td>
+                </tr>
+            }
+            @if (Model.Employees.Count == 0)
+            {
+                <tr><td colspan="9" class="text-center text-muted py-4">Add employees to start building a schedule.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

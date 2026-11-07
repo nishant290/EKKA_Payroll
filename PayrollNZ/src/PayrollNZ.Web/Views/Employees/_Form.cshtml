@@ -1,0 +1,70 @@
+@model Employee
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger py-2"></div>
+
+<div class="section-title mt-0">Personal details</div>
+<div class="row g-3">
+    <div class="col-md-6"><label asp-for="FirstName" class="form-label"></label>
+        <input asp-for="FirstName" class="form-control" /><span asp-validation-for="FirstName" class="text-danger small"></span></div>
+    <div class="col-md-6"><label asp-for="LastName" class="form-label"></label>
+        <input asp-for="LastName" class="form-control" /><span asp-validation-for="LastName" class="text-danger small"></span></div>
+    <div class="col-md-6"><label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" /><span asp-validation-for="Email" class="text-danger small"></span></div>
+    <div class="col-md-3"><label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="DateOfBirth" class="form-label"></label>
+        <input asp-for="DateOfBirth" class="form-control" /></div>
+</div>
+
+<div class="section-title">Residential address</div>
+<div class="row g-3">
+    <div class="col-md-6"><label asp-for="AddressLine1" class="form-label"></label><input asp-for="AddressLine1" class="form-control" /></div>
+    <div class="col-md-6"><label asp-for="AddressLine2" class="form-label"></label><input asp-for="AddressLine2" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="Suburb" class="form-label"></label><input asp-for="Suburb" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="City" class="form-label"></label><input asp-for="City" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="Postcode" class="form-label"></label><input asp-for="Postcode" class="form-control" /></div>
+    <div class="col-md-3"><label asp-for="Country" class="form-label"></label><input asp-for="Country" class="form-control" /></div>
+</div>
+
+<div class="section-title">Emergency contact</div>
+<div class="row g-3">
+    <div class="col-md-6"><label asp-for="EmergencyContactName" class="form-label"></label><input asp-for="EmergencyContactName" class="form-control" /></div>
+    <div class="col-md-6"><label asp-for="EmergencyContactPhone" class="form-label"></label><input asp-for="EmergencyContactPhone" class="form-control" /></div>
+</div>
+
+<div class="section-title">Employment &amp; pay</div>
+<div class="row g-3">
+    <div class="col-md-4"><label asp-for="JobTitle" class="form-label"></label><input asp-for="JobTitle" class="form-control" /></div>
+    <div class="col-md-4"><label asp-for="EmploymentType" class="form-label"></label>
+        <select asp-for="EmploymentType" asp-items="Html.GetEnumSelectList<EmploymentType>()" class="form-select"></select></div>
+    <div class="col-md-4"><label asp-for="PayType" class="form-label"></label>
+        <select asp-for="PayType" asp-items="Html.GetEnumSelectList<PayType>()" class="form-select"></select></div>
+    <div class="col-md-4"><label asp-for="HourlyRate" class="form-label"></label>
+        <input asp-for="HourlyRate" class="form-control" type="number" step="0.01" /><span asp-validation-for="HourlyRate" class="text-danger small"></span></div>
+    <div class="col-md-4"><label asp-for="AnnualSalary" class="form-label"></label>
+        <input asp-for="AnnualSalary" class="form-control" type="number" step="0.01" /><span asp-validation-for="AnnualSalary" class="text-danger small"></span></div>
+    <div class="col-md-4 d-flex align-items-end"><div class="form-check">
+        <input asp-for="IsActive" class="form-check-input" /><label asp-for="IsActive" class="form-check-label"></label></div></div>
+    <div class="col-md-4"><label asp-for="StartDate" class="form-label"></label>
+        <input asp-for="StartDate" class="form-control" /><span asp-validation-for="StartDate" class="text-danger small"></span></div>
+    <div class="col-md-4"><label asp-for="EndDate" class="form-label"></label>
+        <input asp-for="EndDate" class="form-control" /><span asp-validation-for="EndDate" class="text-danger small"></span></div>
+</div>
+
+<div class="section-title">Tax &amp; KiwiSaver</div>
+<div class="row g-3">
+    <div class="col-md-4"><label asp-for="IrdNumber" class="form-label"></label><input asp-for="IrdNumber" class="form-control" placeholder="xxx-xxx-xxx" /></div>
+    <div class="col-md-4"><label asp-for="TaxCode" class="form-label"></label>
+        <select asp-for="TaxCode" class="form-select">
+            @foreach (var code in new[] { "M", "ME", "M SL", "ME SL", "SB", "S", "SH", "ST", "SA", "CAE", "CAE SL", "ND", "WT", "EDW" })
+            {
+                <option value="@code" selected="@(Model.TaxCode == code)">@code</option>
+            }
+        </select></div>
+    <div class="col-md-4 d-flex align-items-end"><div class="form-check">
+        <input asp-for="HasStudentLoan" class="form-check-input" /><label asp-for="HasStudentLoan" class="form-check-label"></label></div></div>
+    <div class="col-md-4"><label asp-for="KiwiSaverEmployeeRate" class="form-label"></label>
+        <input asp-for="KiwiSaverEmployeeRate" class="form-control" type="number" step="0.5" /></div>
+    <div class="col-md-4"><label asp-for="KiwiSaverEmployerRate" class="form-label"></label>
+        <input asp-for="KiwiSaverEmployerRate" class="form-control" type="number" step="0.5" /></div>
+</div>

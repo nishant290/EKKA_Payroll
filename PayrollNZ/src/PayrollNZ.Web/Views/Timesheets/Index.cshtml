@@ -1,0 +1,60 @@
+@model List<TimesheetEntry>
+@{
+    ViewData["Title"] = "Timesheets";
+    var from = (DateOnly)ViewData["From"]!;
+    var to = (DateOnly)ViewData["To"]!;
+    var employees = (List<SelectListItem>)ViewData["Employees"]!;
+}
+
+<div class="page-head">
+    <h1>Timesheets</h1>
+    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg"></i> Log hours</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <select name="employeeId" class="form-select">
+            <option value="">All employees</option>
+            @foreach (var o in employees) { <option value="@o.Value" selected="@o.Selected">@o.Text</option> }
+        </select>
+    </div>
+    <div class="col-md-3"><input type="date" name="from" value="@from.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-md-3"><input type="date" name="to" value="@to.ToString("yyyy-MM-dd")" class="form-control" /></div>
+    <div class="col-auto"><button class="btn btn-outline-secondary" type="submit">Filter</button></div>
+</form>
+
+<div class="card">
+    <table class="table table-hover mb-0 align-middle">
+        <thead><tr><th>Date</th><th>Employee</th><th>Start</th><th>Finish</th><th class="num">Break</th><th class="num">Hours</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var t in Model)
+        {
+            <tr>
+                <td>@t.WorkDate.ToString("ddd dd MMM yyyy")</td>
+                <td>@t.Employee?.FullName</td>
+                <td>@t.StartTime.ToString("h:mm tt")</td>
+                <td>@t.EndTime.ToString("h:mm tt")</td>
+                <td class="num">@t.BreakMinutes min</td>
+                <td class="num">@t.Hours.ToString("0.00")</td>
+                <td>@if (t.PayRunId != null) { <span class="badge bg-success">In pay run</span> } else { <span class="badge bg-light text-dark border">Unpaid</span> }</td>
+                <td class="text-end">
+                    @if (t.PayRunId == null)
+                    {
+                        <form asp-action="Delete" asp-route-id="@t.Id" method="post" onsubmit="return confirm('Delete this entry?');">
+                            <button class="btn btn-sm btn-link text-danger p-0" title="Delete"><i class="bi bi-trash"></i></button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        @if (Model.Count == 0)
+        {
+            <tr><td colspan="8" class="text-center text-muted py-4">No hours logged in this period.</td></tr>
+        }
+        </tbody>
+        @if (Model.Count > 0)
+        {
+            <tfoot><tr class="fw-semibold"><td colspan="5" class="text-end">Total</td><td class="num">@Model.Sum(t => t.Hours).ToString("0.00")</td><td colspan="2"></td></tr></tfoot>
+        }
+    </table>
+</div>
